@@ -17,3 +17,11 @@ set goals
 29.11 - 1.12
 
 trained yolov8 nano model on two different datasets
+
+5.12 
+
+learned how to count scored goal
+
+1.12 - 6.12 
+
+trained yolov8n model to detect player, basketball, and rim, and also pose detection model to detect court keypoints
