@@ -27,6 +27,7 @@ class courtDrawer:
             (self.actualW-5.79, self.actualH - 5.18)
         ]
         self.translatedKeypoints = [self._translate(x, y) for x, y in self.actualKeypoints]
+        self.drawCourt()
 
     def _translate(self, x, y):
         return (int(x/self.actualW*self.W), int(y/self.actualH*self.H))
@@ -61,3 +62,14 @@ class courtDrawer:
                 cv2.ellipse(self.court, (int(x / self.actualW * self.W), self.H // 2), (55, 55), 0, 90, 270, (0, 0, 0), 2)
                 cv2.line(self.court, self._translate(self.actualW-1.22, 6.7), self._translate(self.actualW-1.22, self.actualH - 6.7), (0, 0, 0), 2)
         self.drawKeypoints()
+
+    def blit(self, im, x, y, w, h, alpha):
+        blitim = cv2.resize(self.court, (w, h))
+        reg = im[y:y+h, x:x+w]
+        im[y:y+h, x:x+w] = cv2.addWeighted(blitim, alpha, reg, 1 - alpha, 0)
+        return im
+
+
+if __name__ == "__main__":
+    c = courtDrawer()
+    c.drawCourt()
