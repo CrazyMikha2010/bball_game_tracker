@@ -75,7 +75,6 @@ class courtDrawer:
             else:
                 cv2.ellipse(self.court, (self._translateX(x), self.H // 2), (55, 55), 0, 90, 270, (0, 0, 0), 2)
                 cv2.line(self.court, self._translate(self.actualW-1.22, 6.7), self._translate(self.actualW-1.22, self.actualH - 6.7), (0, 0, 0), 2)
-        self.drawKeypoints()
 
     def blit(self, im, x, y, w, h, alpha):
         blitim = cv2.resize(self.court, (w, h))
