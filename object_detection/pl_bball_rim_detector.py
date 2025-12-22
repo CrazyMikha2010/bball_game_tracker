@@ -5,11 +5,11 @@ import supervision as sv
 
 class objectDetector:
     def __init__(self):
-        self.model = YOLO("models/nba.pt")
+        self.model = YOLO("models/best.pt")
+        # self.model = YOLO("models/nba.pt")
         self.ballCls = 0
         self.rimCls = 1
         self.playerCls = 2
-        self.rimPos = "undefined"
         self.ballCoords = []
         self.rimCoords = []
         self.playerCoords = []
@@ -28,13 +28,7 @@ class objectDetector:
                     self.ballCoords.append((center, r))
                 elif clsID == self.rimCls: # rim
                     cv2.line(im, (x1, y1), (x2, y1), (255, 255, 255), 2)
-                    if self.rimPos != "undefined":
-                        self.rimPos = "both"
-                    elif x2 < im.shape[1] // 2:
-                        self.rimPos = "left"
-                    else:
-                        self.rimPos = "right"
-                    self.rimCoords.append(((x1, y1), (x2, y2)))
+                    self.rimCoords.append( ((x1, y1), (x2, y2)) )
                 else: # player
                     cv2.rectangle(im, (x1, y1), (x2, y2), (255, 0, 0), 2)
                     self.playerCoords.append(((x1, y1), (x2, y2)))
@@ -42,6 +36,7 @@ class objectDetector:
 
     def drawBall(self, im):
         for center, radius in self.ballCoords[-10:]:
+            continue
             cv2.circle(im, center, radius, (0, 0, 255), cv2.FILLED)
         return im
 

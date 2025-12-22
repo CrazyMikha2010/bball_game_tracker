@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import supervision as sv
+from math import hypot
 
 class courtDrawer:
     def __init__(self):
@@ -27,6 +28,17 @@ class courtDrawer:
             (self.actualW - 5.79, self.actualH - 10.06),
             (self.actualW-5.79, self.actualH - 5.18)
         ])
+        self.detectedKeypoints = np.array([
+            (self.actualW, 0),
+            (self.actualW, self.actualH - 14.33),
+            (self.actualW, self.actualH - 10.06),
+            (self.actualW, self.actualH - 5.18),
+            (self.actualW, self.actualH - 0.91),
+            (self.actualW, self.actualH),
+            (self.actualW - 5.79, self.actualH - 10.06),
+            (self.actualW - 5.79, self.actualH - 5.18)
+        ])
+        self.translated_detected_Keypoints = (self.detectedKeypoints * [self.W / self.actualW, self.H / self.actualH]).astype(int)
         self.translatedKeypoints = (self.actualKeypoints * [self.W / self.actualW, self.H / self.actualH]).astype(int)
         self.VerteLabelAnnotator = sv.VertexLabelAnnotator(
             color=sv.Color.GREEN,
@@ -35,8 +47,12 @@ class courtDrawer:
         )
         self.drawCourt()
 
+    def _update(self):
+        self.court = np.ones((self.H, self.W, 3), np.uint8) * 255
+        self.drawCourt()
+
     def _translate(self, x, y):
-        return (int(x/self.actualW*self.W), int(y/self.actualH*self.H))
+        return (self._translateX(x), self._translateY(y))
 
     def _translateX(self, x):
         return int(x/self.actualW*self.W)
@@ -45,7 +61,7 @@ class courtDrawer:
         return int(y/self.actualH*self.H)
 
     def drawKeypoints(self):
-        tmp = np.array([self.translatedKeypoints])
+        tmp = np.array([self.translated_detected_Keypoints])
         self.court = self.VerteLabelAnnotator.annotate(
             scene=self.court.copy(),
             key_points=sv.KeyPoints(xy=tmp)
@@ -76,8 +92,43 @@ class courtDrawer:
                 cv2.ellipse(self.court, (self._translateX(x), self.H // 2), (55, 55), 0, 90, 270, (0, 0, 0), 2)
                 cv2.line(self.court, self._translate(self.actualW-1.22, 6.7), self._translate(self.actualW-1.22, self.actualH - 6.7), (0, 0, 0), 2)
 
+    def draw_points(self, coords, color):
+        self._update()
+        for coord in coords:
+            cv2.circle(self.court, (int(coord[0]), int(coord[1])), 5, color, 2)
+
+    def in3pts(self, coord):
+        x, y = coord
+        if x >= self._translateX(self.actualW - 4.27):
+            if self.translatedKeypoints[1][1] <= y <= self.translatedKeypoints[4][1]:
+                return False
+        else:
+            rim_x, rim_y = self._translate(self.actualW - 1.58, self.actualH / 2)
+            r = self._translateY(6.5)
+            dist = hypot(x - rim_x, y - rim_y)
+            if dist <= r:
+                return False
+
+        return True
+
+    def check(self):
+        from random import randint
+        for _ in range(100):
+            x, y = randint(0, self.W), randint(0, self.H)
+            if x >= self._translateX(self.actualW - 4.27):
+                if self.translatedKeypoints[1][1] <= y <= self.translatedKeypoints[4][1]:
+                    cv2.circle(self.court, (x, y), 5, (0, 255, 0), 2)
+            else:
+                rim_x, rim_y = self._translate(self.actualW - 1.58, self.actualH / 2)
+                r = self._translateY(7.24)
+                dist = hypot(x-rim_x, y-rim_y)
+                if dist <= r:
+                    cv2.circle(self.court, (x, y), 5, (0, 255, 0), 2)
+
     def blit(self, im, x, y, w, h, alpha):
-        blitim = cv2.resize(self.court, (w, h))
+        blitim = self.court[:, self.W//2:self.W]
+        blitim = np.rot90(blitim)
+        blitim = cv2.resize(blitim, (w, h))
         reg = im[y:y+h, x:x+w]
         im[y:y+h, x:x+w] = cv2.addWeighted(blitim, alpha, reg, 1 - alpha, 0)
         return im
@@ -90,5 +141,6 @@ class courtDrawer:
 if __name__ == "__main__":
     c = courtDrawer()
     c.drawKeypoints()
+    c.check()
     c.show()
 

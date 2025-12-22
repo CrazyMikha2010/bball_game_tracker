@@ -1,4 +1,4 @@
 from ultralytics import YOLO
 
-model = YOLO("../runs_nano/detect/train5/weights/best.pt")
-results = model.train(data="Basketball.v1i.yolov8/data.yaml", epochs=25, batch=24)
+model = YOLO("yolov8n-pose.yaml")
+results = model.train(data="court_keypoints/data.yaml", epochs=100, batch=24)

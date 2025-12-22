@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 import cv2
 import supervision as sv
-from court_scheme.court_drawer import courtDrawer
+import numpy as np
 
 class keypointDetector:
     def __init__(self):
@@ -10,29 +10,31 @@ class keypointDetector:
             text_color=sv.Color.BLACK,
             border_radius=5
         )
-        self.courtDetector = YOLO("models/pose.pt")
-        self.dst = courtDrawer().translatedKeypoints
+        self.courtDetector = YOLO("models/best2.pt")
+        # self.courtDetector = YOLO("models/pose.pt")
 
-    def getKeypoints(self, im):
+    def getKeypointsSV(self, im):
         result = self.courtDetector(im)[0]
         keypoints = sv.KeyPoints.from_ultralytics(result)
         return keypoints
 
+    def getKeypointsNP(self, im):
+        result = self.courtDetector(im)[0]
+        keypoints = result.keypoints.data.cpu().numpy()
+        keypointsXY = keypoints[0, :, :2]
+        return keypointsXY.astype(np.float32)
+
     def drawKeypoints(self, im):
         annotated_frame = self.VerteLabelAnnotator.annotate(
             scene=im.copy(),
-            key_points=self.getKeypoints(im)
+            key_points=self.getKeypointsSV(im)
         )
         return annotated_frame
 
-    def createHomography(self, im):
-        src = self.getKeypoints(im).xy
-        H, status = cv2.findHomography(src, self.dst)
 
 
 if __name__ == "__main__":
     k = keypointDetector()
-    c = courtDrawer()
     cap = cv2.VideoCapture("/Users/mezhibovskiymikhail/Downloads/temp/video_2.mp4")
     while(cap.isOpened()):
         ret, frame = cap.read()
