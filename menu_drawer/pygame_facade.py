@@ -159,7 +159,6 @@ class PygameFacade:
         """
         self.draw_rectangle(x, y, width, height, button_color)
         self.draw_text(x + 2, y + 2, text, text_color, font_size)
-        self.update_screen()
         return pygame.Rect(x, y, width, height)
 
     def image_to_surface(self, image: numpy.ndarray) -> pygame.Surface:
