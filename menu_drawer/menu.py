@@ -1,6 +1,5 @@
-from pygame_facade import PygameFacade
+from pygame_facade import PygameFacade, Button, ToggleSwitch
 import pygame as pg
-
 
 class Menu():
     def __init__(self, screen_size: tuple):
@@ -9,31 +8,41 @@ class Menu():
         self.H = screen_size[1]
         self.pg_facade = PygameFacade(screen_size)
         self.cur = "main"
-        self.buttons = {}
-        self.actions = {
-            "main": self.draw_menu,
-            "help": self.menu_help,
-            "settings": self.menu_settings
-        }
-
-    def draw_buttons(self):
-        self.cur = "main"
         self.buttons = {
-            "start": self.pg_facade.draw_button(480, 300, 320, 80, "START", (235, 66, 0), (0, 0, 0), 120),
-            "help": self.pg_facade.draw_button(480, 410, 320, 80, "HELP", (235, 66, 0), (0, 0, 0), 120),
-            "settings": self.pg_facade.draw_button(480, 520, 320, 80, "SETTINGS", (235, 66, 0), (0, 0, 0), 90)
+            "start": Button((480, 300), (320, 80), "START", 20, 120, (0, 0, 0), (0, 0, 0), (235, 66, 0), (204, 59, 2),self.pg_facade, self.draw_menu_start),
+            "help": Button((480, 410), (320, 80), "HELP", 20, 120, (0, 0, 0), (0, 0, 0), (235, 66, 0), (204, 59, 2),self.pg_facade, self.menu_help),
+            "settings": Button((480, 520), (320, 80), "SETTINGS", 20, 90, (0, 0, 0), (0, 0, 0), (235, 66, 0),(204, 59, 2), self.pg_facade, self.menu_settings),
+            "back": Button((15, 15), (200, 60), "BACK", 20, 80, (0, 0, 0), (0, 0, 0), (235, 66, 0), (204, 59, 2),self.pg_facade, self.menu_back)
         }
+        self.switches = []
+        for i in range(5):
+            self.switches.append(ToggleSwitch((240, 140 + i * 75), (100, 50), (176, 176, 176), (52, 235, 64), (255, 255, 255), self.pg_facade))
 
+    def draw(self):
+        self.pg_facade.clear_screen()
+        if self.cur == "main":
+            for button_name in ["start", "help", "settings"]:
+                self.buttons[button_name].draw()
+        else:
+            self.buttons["back"].draw()
+
+        if self.cur == "help":
+            self.draw_menu_help()
+        elif self.cur == "settings":
+            self.draw_menu_settings()
+
+        self.pg_facade.update_screen()
 
     def menu_back(self):
-        self.buttons["back"] = self.pg_facade.draw_button(15, 15, 200, 60, "BACK", (235, 66, 0), (0, 0, 0), 80)
+        self.cur = "main"
 
-    def menu_start(self):
+    def draw_menu_start(self):
         print("starting")
 
-    def menu_help(self):
-        self.cur = "help"
-        self.pg_facade.clear_screen()
+    def menu_start(self):
+        self.cur = "main"
+
+    def draw_menu_help(self):
         self.pg_facade.draw_rectangle(100, 100, 1080, 520, (235, 66, 0))
 
         rules = ["-Поставьте камеру чтобы было видно корт и кольцо",
@@ -44,11 +53,11 @@ class Menu():
 
         for i in range(len(rules)):
             self.pg_facade.draw_text(120, 120 + i * 70, rules[i], (0, 0, 0), 52)
-        self.menu_back()
 
-    def menu_settings(self):
-        self.cur = "settings"
-        self.pg_facade.clear_screen()
+    def menu_help(self):
+        self.cur = "help"
+
+    def draw_menu_settings(self):
         self.pg_facade.draw_rectangle(100, 100, 1080, 520, (235, 66, 0))
 
         settings = [
@@ -58,48 +67,27 @@ class Menu():
             "Показывать точки на корте",
             "Пкоазывать корт в левом верхнем углу"
         ]
+        for switch in self.switches:
+            switch.draw()
         for i, setting in enumerate(settings):
-            self.pg_facade.draw_text(120, 120 + i * 70, setting, (0, 0, 0), 52)
-        self.menu_back()
+            self.pg_facade.draw_text(360, 140 + i * 75, setting, (0, 0, 0), 52)
 
-    def handle_click(self, mouse_pos: tuple):
+    def menu_settings(self):
+        self.cur = "settings"
+
+    def update(self, event):
         if self.cur == "main":
-            for button_name, button_rect in self.buttons.items():
-                if button_rect.collidepoint(mouse_pos):
-                    if button_name == 'start':
-                        return self.menu_start()
-                    elif button_name == 'help':
-                        self.menu_help()
-                        break
-                    elif button_name == 'settings':
-                        self.menu_settings()
-                        break
-
-        elif self.cur in ["help", "settings"]:
-            if self.buttons['back'].collidepoint(mouse_pos):
-                self.cur = "main"
-                self.draw_menu()
-
-
-    def draw_menu(self):
-        self.pg_facade.clear_screen()
-        self.draw_buttons()
-
-
-    def update(self, mouse: tuple):
-        for event in pg.event.get():
-            if event.type == pg.MOUSEBUTTONDOWN:
-                return self.handle_click(event.pos)
-
-        for button_name, button_rect in self.buttons.items():
-            if button_rect.collidepoint(mouse):
-                pass
-
-        return False
-
-    def draw(self):
-        self.actions[self.cur]()
-        self.pg_facade.update_screen()
+            for button_name in ["start", "help", "settings"]:
+                callback = self.buttons[button_name].update(event)
+                if callable(callback):
+                    callback()
+        else:
+            callback = self.buttons["back"].update(event)
+            if callable(callback):
+                callback()
+            if self.cur == "settings":
+                for switch in self.switches:
+                    switch.update(event)
 
 
 if __name__ == '__main__':
@@ -110,15 +98,11 @@ if __name__ == '__main__':
     running = True
 
     while running:
-        mouse_pos = pg.mouse.get_pos()
-
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
-            elif event.type == pg.MOUSEBUTTONDOWN:
-                menu.handle_click(event.pos)
-
-        menu.pg_facade.clear_screen()
+            menu.update(event)
         menu.draw()
+
 
     pg.quit()
