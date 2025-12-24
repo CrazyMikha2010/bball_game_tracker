@@ -1,6 +1,7 @@
 import cv2
 from ultralytics import YOLO
 import numpy as np
+import pygame as pg
 from menu_drawer.pygame_facade import PygameFacade
 from court_scheme.court_drawer import courtDrawer
 from court_scheme.keypoint_detector import keypointDetector
@@ -9,14 +10,16 @@ from court_scheme.homography import Homography
 from object_detection.ball_cv import ballDetector
 from score_counter.shotDetector import shotDetector
 from menu_drawer.stats_drawer import statsDrawer
+from menu_drawer.menu import Menu
 
 
-cap = cv2.VideoCapture("testing/videos/test3.MOV")
+
 c = courtDrawer()
 k = keypointDetector()
 o = objectDetector()
 b = ballDetector()
 pg_facade = PygameFacade((1280, 720), "Mezh project")
+menu = Menu((1280, 720), pg_facade)
 stats_drawer = statsDrawer(pg_facade)
 score = 0
 in3pts = False
@@ -30,9 +33,16 @@ made_homo, missed_homo = made, missed
 stats = [0] * 9
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+cap = cv2.VideoCapture("testing/videos/test3.MOV")
 out = cv2.VideoWriter('output_video.mp4', fourcc, int(cap.get(cv2.CAP_PROP_FPS)), (1280, 720))
-
 while True:
+    while not menu.is_start:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+            menu.update(event)
+        menu.draw()
+    print(menu.settings)
     pg_facade.clear_screen()
     ret, frame = cap.read()
     if not ret:

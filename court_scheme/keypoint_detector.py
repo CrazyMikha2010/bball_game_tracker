@@ -21,6 +21,8 @@ class keypointDetector:
     def getKeypointsNP(self, im):
         result = self.courtDetector(im)[0]
         keypoints = result.keypoints.data.cpu().numpy()
+        if keypoints.shape[0] == 0:
+            return np.array([], dtype=np.float32).reshape(0, 2)
         keypointsXY = keypoints[0, :, :2]
         return keypointsXY.astype(np.float32)
 
