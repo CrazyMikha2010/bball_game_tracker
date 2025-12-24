@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-lower = np.array([2, 120, 20])
-upper = np.array([7, 200, 255])
+lower = np.array([0, 109, 0])
+upper = np.array([12, 255, 197])
 
 
 class ballDetector():

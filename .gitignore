@@ -46,3 +46,5 @@ venv.bak/
 /training_models/Tracer---basketball-3/
 /training_models/basketball-1/
 /training_models/Basketball.v1i.yolov8/
+/training_models/court_keypoints/
+/training_models/custom_ball_rim_player/

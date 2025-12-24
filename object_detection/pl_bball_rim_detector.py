@@ -24,7 +24,7 @@ class objectDetector:
                 if clsID == self.ballCls: # ball
                     center = (x1 + (x2-x1)//2, y1 + (y2-y1)//2)
                     r = (x2-x1)//2
-                    # cv2.circle(im, center, r, (0, 0, 255), cv2.FILLED)
+                    cv2.circle(im, center, r, (0, 0, 255), cv2.FILLED)
                     self.ballCoords.append((center, r))
                 elif clsID == self.rimCls: # rim
                     cv2.line(im, (x1, y1), (x2, y1), (255, 255, 255), 2)

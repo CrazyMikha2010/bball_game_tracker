@@ -45,6 +45,7 @@ class courtDrawer:
             text_color=sv.Color.BLACK,
             border_radius=5
         )
+        self.made, self.missed = [], []
         self.drawCourt()
 
     def _update(self):
@@ -104,7 +105,7 @@ class courtDrawer:
                 return False
         else:
             rim_x, rim_y = self._translate(self.actualW - 1.58, self.actualH / 2)
-            r = self._translateY(6.5)
+            r = self._translateY(6.2)
             dist = hypot(x - rim_x, y - rim_y)
             if dist <= r:
                 return False
@@ -136,6 +137,13 @@ class courtDrawer:
     def show(self):
         cv2.imshow('court drawer', self.court)
         cv2.waitKey(0)
+
+    def drawFGA(self):
+        for miss in self.missed:
+            cv2.drawMarker(self.court, (int(miss[0]), int(miss[1])), (0, 0, 255),markerType=cv2.MARKER_CROSS,markerSize=15,thickness=2)
+        for make in self.made:
+            cv2.drawMarker(self.court, (int(make[0]), int(make[1])), (255, 255, 0),markerType=cv2.MARKER_STAR,markerSize=15,thickness=2)
+
 
 
 if __name__ == "__main__":

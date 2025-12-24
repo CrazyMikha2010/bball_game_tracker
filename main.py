@@ -8,16 +8,26 @@ from object_detection.pl_bball_rim_detector import objectDetector
 from court_scheme.homography import Homography
 from object_detection.ball_cv import ballDetector
 from score_counter.shotDetector import shotDetector
+from menu_drawer.stats_drawer import statsDrawer
 
 
-cap = cv2.VideoCapture("testing/videos/test1.mp4")
+cap = cv2.VideoCapture("testing/videos/test3.MOV")
 c = courtDrawer()
 k = keypointDetector()
 o = objectDetector()
 b = ballDetector()
 pg_facade = PygameFacade((1280, 720), "Mezh project")
+stats_drawer = statsDrawer(pg_facade)
 score = 0
 in3pts = False
+flying = False
+shot_coords = (-1, -1)
+
+twoPA, threePA, twoPM, threePM = 0, 0, 0, 0
+made, missed = [], []
+made_homo, missed_homo = made, missed
+
+stats = [0] * 9
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter('output_video.mp4', fourcc, int(cap.get(cv2.CAP_PROP_FPS)), (1280, 720))
@@ -25,6 +35,8 @@ out = cv2.VideoWriter('output_video.mp4', fourcc, int(cap.get(cv2.CAP_PROP_FPS))
 while True:
     pg_facade.clear_screen()
     ret, frame = cap.read()
+    if not ret:
+        break
     frame = o.detect(frame)
     b.detectBall(frame)
     src = k.getKeypointsNP(frame)
@@ -32,30 +44,66 @@ while True:
     h = Homography(src, dst)
     if o.playerCoords:
         player_pos = o.playerCoords[-1] # ((x1, y1), (x2, y2))
+        player_top = player_pos[0][1]
         player_pos = ((player_pos[0][0] + player_pos[1][0])//2, player_pos[1][1])
         coords = h.createHomography([player_pos])
-        c.draw_points(coords, (0, 0, 255))
-        in3pts = c.in3pts(coords[0])
-        if in3pts:
-            frame = pg_facade.putText(frame, (10, 500), "3pt", 5)
-            print('3pt')
-        else:
-            frame = pg_facade.putText(frame, (10, 500), "2pt", 5)
-            print('2pt')
+        if made:
+            made_homo = h.createHomography(made)
+        if missed: missed_homo = h.createHomography(missed)
+        if h.success:
+            c.draw_points(coords, (0, 0, 255))
+            in3pts = c.in3pts(coords[0])
+        if b.path:
+            ball_top = b.path[-1][1]
+            if ball_top < player_top:
+                if not flying:
+                    shot_coords = player_pos
+                flying = True
+            else:
+                flying = False
+
 
     if len(b.path) >= 2:
-        s = shotDetector(o.rimCoords[-1][0][0], o.rimCoords[-1][1][0], o.rimCoords[-1][0][1])
-        if s.isIn(b.path[-2], b.path[-1]) and b.updated:
-            score += 2 + 1 * in3pts
+        if o.rimCoords and b.updated:
+            s = shotDetector(o.rimCoords[-1][0][0], o.rimCoords[-1][1][0], o.rimCoords[-1][0][1])
+            if b.path[-2][1] < o.rimCoords[-1][0][1] < b.path[-1][1]:
+                shot_coords = h.createHomography([shot_coords])[0]
+                if s.isIn(b.path[-2], b.path[-1]) and b.updated:
+                    c.made.append(shot_coords)
+                    if in3pts:
+                        threePM += 1
+                        threePA += 1
+                    else:
+                        twoPM += 1
+                        twoPA += 1
+                else:
+                    c.missed.append(shot_coords)
+                    if in3pts:
+                        threePA += 1
+                    else:
+                        twoPA += 1
             b.updated = False
 
+    stats[0] = twoPM + threePM
+    stats[1] = twoPA + threePA
+    stats[2] = int((stats[0] / max(stats[1], 1)) * 100)
+    stats[3] = twoPM
+    stats[4] = twoPA
+    stats[5] = int((stats[3] / max(stats[4], 1)) * 100)
+    stats[6] = threePM
+    stats[7] = threePA
+    stats[8] = int((stats[6] / max(stats[7], 1)) * 100)
+    c.drawFGA()
     frame = c.blit(frame, 10, 10, 270, 200, 0.7)
     frame = k.drawKeypoints(frame)
     frame = b.drawBall(frame)
-    frame = pg_facade.putText(frame, (10, 600), f"score: {score}", 5)
-    out.write(frame)
-    # pg_facade.draw_image(0, 0, pg_facade.image_to_surface(frame))
-    # pg_facade.update_screen()
+    # out.write(frame)
+    pg_facade.draw_image(0, 0, pg_facade.image_to_surface(frame))
+    stats_drawer.draw_score(score)
+    stats_drawer.draw_stats(stats)
+    stats_drawer.draw_in3pts(in3pts)
+    stats_drawer.draw_flying(flying)
+    pg_facade.update_screen()
 
 cap.release()
 out.release()
