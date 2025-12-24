@@ -14,7 +14,7 @@ class objectDetector:
         self.rimCoords = []
         self.playerCoords = []
 
-    def detect(self, im):
+    def detect(self, im, draw_rim: bool, draw_player: bool):
         results = self.model(im, conf=0.6)[0]
         self.rimPos = "undefined"
         for r in results:
@@ -24,13 +24,13 @@ class objectDetector:
                 if clsID == self.ballCls: # ball
                     center = (x1 + (x2-x1)//2, y1 + (y2-y1)//2)
                     r = (x2-x1)//2
-                    cv2.circle(im, center, r, (0, 0, 255), cv2.FILLED)
+                    # cv2.circle(im, center, r, (0, 0, 255), cv2.FILLED)
                     self.ballCoords.append((center, r))
                 elif clsID == self.rimCls: # rim
-                    cv2.line(im, (x1, y1), (x2, y1), (255, 255, 255), 2)
+                    if draw_rim: cv2.line(im, (x1, y1), (x2, y1), (255, 255, 255), 2)
                     self.rimCoords.append( ((x1, y1), (x2, y2)) )
                 else: # player
-                    cv2.rectangle(im, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                    if draw_player: cv2.rectangle(im, (x1, y1), (x2, y2), (255, 0, 0), 2)
                     self.playerCoords.append(((x1, y1), (x2, y2)))
         return self.drawBall(im)
 

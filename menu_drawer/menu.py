@@ -9,10 +9,10 @@ class Menu():
         self.pg_facade = facade
         self.cur = "main"
         self.buttons = {
-            "start": Button((480, 300), (320, 80), "START", 20, 120, (0, 0, 0), (0, 0, 0), (235, 66, 0), (204, 59, 2),self.pg_facade, self.menu_start),
-            "help": Button((480, 410), (320, 80), "HELP", 20, 120, (0, 0, 0), (0, 0, 0), (235, 66, 0), (204, 59, 2),self.pg_facade, self.menu_help),
-            "settings": Button((480, 520), (320, 80), "SETTINGS", 20, 90, (0, 0, 0), (0, 0, 0), (235, 66, 0),(204, 59, 2), self.pg_facade, self.menu_settings),
-            "back": Button((15, 15), (200, 60), "BACK", 20, 80, (0, 0, 0), (0, 0, 0), (235, 66, 0), (204, 59, 2),self.pg_facade, self.menu_back)
+            "start": Button((480, 300), (320, 80), "START", 20, 120, (0, 0, 0), (255, 255, 255), (235, 66, 0), (145, 41, 0),self.pg_facade, self.menu_start),
+            "help": Button((480, 410), (320, 80), "HELP", 20, 120, (0, 0, 0), (255, 255, 255), (235, 66, 0), (145, 41, 0),self.pg_facade, self.menu_help),
+            "settings": Button((480, 520), (320, 80), "SETTINGS", 20, 90, (0, 0, 0), (255, 255, 255), (235, 66, 0),(145, 41, 0), self.pg_facade, self.menu_settings),
+            "back": Button((15, 15), (200, 60), "BACK", 20, 80, (0, 0, 0), (255, 255, 255), (235, 66, 0), (145, 41, 0),self.pg_facade, self.menu_back)
         }
         self.switches = []
         for i in range(5):
@@ -69,7 +69,7 @@ class Menu():
             "Показывать объект мяча",
             "Показывать объект кольца",
             "Показывать точки на корте",
-            "Пкоазывать корт в левом верхнем углу"
+            "Показывать корт в левом верхнем углу"
         ]
         for switch in self.switches:
             switch.draw()

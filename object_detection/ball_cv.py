@@ -1,16 +1,17 @@
 import cv2
 import numpy as np
 
+# lower = np.array([0, 109, 0])
+# upper = np.array([12, 255, 197])
 lower = np.array([0, 109, 0])
-upper = np.array([12, 255, 197])
-
+upper = np.array([12, 255, 255])
 
 class ballDetector():
     def __init__(self):
         self.path = []
         self.updated = True
 
-    def detectBall(self, frame):
+    def detectBall(self, frame, rim, player):
         frameHSV = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(frameHSV, lower, upper)
         frame_masked = cv2.bitwise_and(frame, frame, mask=mask)
@@ -18,11 +19,12 @@ class ballDetector():
         for contour in contours:
             area = cv2.contourArea(contour)
             x, y, w, h = cv2.boundingRect(contour)
-            if area > 35 and abs(1 - (w/h)) < 0.2 :
+            x, y = x + w//2, y + h//2
+            if area > 20 and abs(1 - (w/h)) < 0.2 and not (rim[0][0] < x < rim[1][0] + 20 and rim[0][1] < y < rim[1][1]) and not (player[0][0] < x < player[1][0] and player[0][1] < y < player[1][1]):
                 self.path.append((int(x+w/2), int(y+h/2)))
                 self.updated = True
 
     def drawBall(self, frame):
-        for coord in self.path:
+        for coord in self.path[-10:]:
             cv2.circle(frame, coord, 5, (255, 0, 0), 2)
         return frame

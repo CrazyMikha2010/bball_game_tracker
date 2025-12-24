@@ -140,9 +140,9 @@ class courtDrawer:
 
     def drawFGA(self):
         for miss in self.missed:
-            cv2.drawMarker(self.court, (int(miss[0]), int(miss[1])), (0, 0, 255),markerType=cv2.MARKER_CROSS,markerSize=15,thickness=2)
+            cv2.drawMarker(self.court, (int(miss[0]), int(miss[1])), (0, 0, 255),markerType=cv2.MARKER_CROSS,markerSize=20,thickness=2)
         for make in self.made:
-            cv2.drawMarker(self.court, (int(make[0]), int(make[1])), (255, 255, 0),markerType=cv2.MARKER_STAR,markerSize=15,thickness=2)
+            cv2.drawMarker(self.court, (int(make[0]), int(make[1])), (0, 255, 255),markerType=cv2.MARKER_STAR,markerSize=20,thickness=2)
 
 
 

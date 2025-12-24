@@ -20,6 +20,6 @@ class shotDetector:
             cross_x = (self.rimY - b) / a
         else:
             cross_x = self.rimY - b
-        return self.rimX1-5 <= cross_x <= self.rimX2+5 # and prev[1] <= self.rimY <= next[1]
+        return self.rimX1-10 <= cross_x <= self.rimX2+10 # and prev[1] <= self.rimY <= next[1]
 
 

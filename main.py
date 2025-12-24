@@ -13,11 +13,10 @@ from menu_drawer.stats_drawer import statsDrawer
 from menu_drawer.menu import Menu
 
 
-
-c = courtDrawer()
-k = keypointDetector()
-o = objectDetector()
-b = ballDetector()
+court_drawer = courtDrawer()
+keypoint_detector = keypointDetector()
+object_detector = objectDetector()
+ball_detector = ballDetector()
 pg_facade = PygameFacade((1280, 720), "Mezh project")
 menu = Menu((1280, 720), pg_facade)
 stats_drawer = statsDrawer(pg_facade)
@@ -42,29 +41,28 @@ while True:
                 running = False
             menu.update(event)
         menu.draw()
-    print(menu.settings)
     pg_facade.clear_screen()
     ret, frame = cap.read()
     if not ret:
         break
-    frame = o.detect(frame)
-    b.detectBall(frame)
-    src = k.getKeypointsNP(frame)
-    dst = c.translated_detected_Keypoints
-    h = Homography(src, dst)
-    if o.playerCoords:
-        player_pos = o.playerCoords[-1] # ((x1, y1), (x2, y2))
+    frame = object_detector.detect(frame, menu.settings[2], menu.settings[0])
+    src = keypoint_detector.getKeypointsNP(frame)
+    dst = court_drawer.translated_detected_Keypoints
+    homography_matrix = Homography(src, dst)
+    if object_detector.playerCoords:
+        player_pos = object_detector.playerCoords[-1] # ((x1, y1), (x2, y2))
+        ball_detector.detectBall(frame, object_detector.rimCoords[-1], player_pos)
         player_top = player_pos[0][1]
         player_pos = ((player_pos[0][0] + player_pos[1][0])//2, player_pos[1][1])
-        coords = h.createHomography([player_pos])
+        coords = homography_matrix.createHomography([player_pos])
         if made:
-            made_homo = h.createHomography(made)
-        if missed: missed_homo = h.createHomography(missed)
-        if h.success:
-            c.draw_points(coords, (0, 0, 255))
-            in3pts = c.in3pts(coords[0])
-        if b.path:
-            ball_top = b.path[-1][1]
+            made_homo = homography_matrix.createHomography(made)
+        if missed: missed_homo = homography_matrix.createHomography(missed)
+        if homography_matrix.success:
+            court_drawer.draw_points(coords, (0, 0, 255))
+            in3pts = court_drawer.in3pts(coords[0])
+        if ball_detector.path:
+            ball_top = ball_detector.path[-1][1]
             if ball_top < player_top:
                 if not flying:
                     shot_coords = player_pos
@@ -73,26 +71,28 @@ while True:
                 flying = False
 
 
-    if len(b.path) >= 2:
-        if o.rimCoords and b.updated:
-            s = shotDetector(o.rimCoords[-1][0][0], o.rimCoords[-1][1][0], o.rimCoords[-1][0][1])
-            if b.path[-2][1] < o.rimCoords[-1][0][1] < b.path[-1][1]:
-                shot_coords = h.createHomography([shot_coords])[0]
-                if s.isIn(b.path[-2], b.path[-1]) and b.updated:
-                    c.made.append(shot_coords)
+    if len(ball_detector.path) >= 2:
+        if object_detector.rimCoords and ball_detector.updated:
+            s = shotDetector(object_detector.rimCoords[-1][0][0], object_detector.rimCoords[-1][1][0], object_detector.rimCoords[-1][0][1])
+            if ball_detector.path[-2][1] < object_detector.rimCoords[-1][0][1] < ball_detector.path[-1][1]:
+                shot_coords = homography_matrix.createHomography([shot_coords])[0]
+                if s.isIn(ball_detector.path[-2], ball_detector.path[-1]):
+                    court_drawer.made.append(shot_coords)
                     if in3pts:
                         threePM += 1
                         threePA += 1
+                        score += 3
                     else:
                         twoPM += 1
                         twoPA += 1
+                        score += 2
                 else:
-                    c.missed.append(shot_coords)
+                    court_drawer.missed.append(shot_coords)
                     if in3pts:
                         threePA += 1
                     else:
                         twoPA += 1
-            b.updated = False
+            ball_detector.updated = False
 
     stats[0] = twoPM + threePM
     stats[1] = twoPA + threePA
@@ -103,19 +103,20 @@ while True:
     stats[6] = threePM
     stats[7] = threePA
     stats[8] = int((stats[6] / max(stats[7], 1)) * 100)
-    c.drawFGA()
-    frame = c.blit(frame, 10, 10, 270, 200, 0.7)
-    frame = k.drawKeypoints(frame)
-    frame = b.drawBall(frame)
-    # out.write(frame)
+    court_drawer.drawFGA()
+    if menu.settings[4]: frame = court_drawer.blit(frame, 10, 10, 270, 200, 0.7)
+    if menu.settings[3]: frame = keypoint_detector.drawKeypoints(frame)
+    if menu.settings[1]: frame = ball_detector.drawBall(frame)
     pg_facade.draw_image(0, 0, pg_facade.image_to_surface(frame))
     stats_drawer.draw_score(score)
     stats_drawer.draw_stats(stats)
     stats_drawer.draw_in3pts(in3pts)
     stats_drawer.draw_flying(flying)
     pg_facade.update_screen()
+    surface_array = pg.surfarray.array3d(pg_facade.screen)
+    frame = cv2.cvtColor(surface_array.swapaxes(0, 1), cv2.COLOR_RGB2BGR)
+    out.write(frame)
 
 cap.release()
 out.release()
 cv2.destroyAllWindows()
-
