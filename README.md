@@ -1,4 +1,3 @@
-арсений, [22.12.2025 14:21]
 # bball_game_tracker
 
 Beautiful, modular tools for tracking basketball games using computer vision.
